@@ -1,0 +1,6 @@
+[submodule "data/johns_hopkins"]
+	path = data/johns_hopkins
+	url = https://github.com/CSSEGISandData/COVID-19.git
+[submodule "src/static/icons/flag-icon-css"]
+	path = src/static/icons/flag-icon-css
+	url = https://github.com/lipis/flag-icon-css.git

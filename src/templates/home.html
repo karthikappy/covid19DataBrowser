@@ -1,0 +1,475 @@
+{% raw %}
+<!DOCTYPE html>
+<html>
+<head>
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@4.x/css/materialdesignicons.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="static/icons/flag-icon-css/css/flag-icon.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+  <style>
+    body {
+      margin:0;
+      padding:0;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <v-app>
+      <v-content>
+        <v-container>
+          <v-form>
+            <v-container>
+              <v-row>
+                <v-col cols="12" sm="4">
+                  <v-autocomplete v-model="selectedCountry" :items="countries" :loading="countriesLoading" label="Country" :disabled="countriesDisabled" item-value="label" item-text="label">
+                    <template v-slot:item="{ item }">
+                      <div style="width:50px"><span :class="'flag-icon flag-icon-' + item.isocode.toLowerCase() +' flag-icon-squared'"></span>{{item.isocode}}</div>
+                      <div>{{item.label}}</div>
+                    </template>
+                  </v-autocomplete>
+                </v-col>
+                <v-col cols="12" sm="4">
+                  <v-autocomplete v-model="selectedState" :items="states" :loading="statesLoading" label="State" :disabled="statesDisabled">
+
+                  </v-autocomplete>
+                </v-col>
+                <v-col cols="12" sm="4">
+                  <v-autocomplete v-model="selectedAdmin2" :items="admin2s" :loading="admin2sLoading" label="Admin2" :disabled="admin2sDisabled">
+
+                  </v-autocomplete>
+                </v-col>
+              </v-row>
+            </v-container>
+          </v-form>
+          <v-container>
+            <v-row>
+              <v-col cols="12" sm="6">
+                <v-data-table
+                  :headers="tableHeaders"
+                  :items="tableData"
+                  :items-per-page="5"
+                  class="elevation-1"
+                  :loading="tableLoading"
+                  dense
+                ></v-data-table>
+              </v-col>
+              <v-col cols="12" sm="6">
+                <v-data-table
+                  :headers="historyTableHeaders"
+                  :items="historyTableData"
+                  :items-per-page="5"
+                  class="elevation-1"
+                  :loading="historyTableLoading"
+                  dense
+                >
+                  
+                </v-data-table>
+              </v-col>
+            </v-row>
+          </v-container>
+          <v-container>
+            <highcharts :options="chartOptions"></highcharts>
+          </v-container>
+
+          <v-form>
+            <v-container>
+              <v-row>
+                <a v-on:click="addItem">Add</a>
+                <a v-on:click="generateChart">Generate Chart</a>
+              </v-row>
+              <v-row v-for="(chartItem, idx) in chartsList">
+                <v-col sm="1">{{idx+1}}</v-col>
+                <v-col cols="12" sm="2">
+                  <v-autocomplete 
+                    v-model="chartItem.country" 
+                    :items="countries" 
+                    :loading="countriesLoading" 
+                    label="Country" 
+                    :disabled="countriesDisabled" 
+                    item-value="0"
+                    v-on:change="loadStates(chartItem)"
+                  >
+                    <template v-slot:item="{ item }">
+                      <div style="width:50px"><span :class="'flag-icon flag-icon-' + item[1].toLowerCase() +' flag-icon-squared'"></span>{{item[1]}}</div>
+                      <div>{{item[0]}}</div>
+                    </template>
+                  </v-autocomplete>
+                </v-col>
+                <v-col cols="12" sm="2">
+                  <v-autocomplete 
+                    v-model="chartItem.state" 
+                    :items="chartItem.stateList" 
+                    :loading="chartItem.statesLoading" 
+                    label="State" 
+                    :disabled="chartItem.statesDisabled"
+                    v-on:change="loadAdmin2(chartItem)"
+                  ></v-autocomplete>
+                </v-col>
+                <v-col cols="12" sm="2">
+                  <v-autocomplete 
+                    v-model="chartItem.admin2" 
+                    :items="chartItem.admin2List" 
+                    :loading="chartItem.admin2sLoading" 
+                    label="Admin2" 
+                    :disabled="chartItem.admin2sDisabled"
+                    ></v-autocomplete>
+                </v-col>
+                <v-col cols="12" sm="2">
+                  <v-autocomplete 
+                    v-model="chartItem.metric" 
+                    :items="metrics" 
+                    label="Metric"
+                  ></v-autocomplete>
+                </v-col>
+                <v-col cols="2" sm="2"><a v-on:click="refreshItemList">Add</a></v-col>
+              </v-row>
+              <v-row>
+                <highcharts :options="chart2Options"></highcharts>
+              </v-row>
+            </v-container>
+          </v-form>
+          
+        </v-container>
+      </v-content>
+    </v-app>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.js"></script>
+  <script src="https://code.highcharts.com/highcharts.js"></script>
+<!--   <script src="https://cdn.jsdelivr.net/npm/highcharts-vue@1.3.5/dist/highcharts-vue.min.js"></script> -->  
+  <!-- <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vue-highcharts/dist/vue-highcharts.min.js"></script> -->
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/highcharts-vue@1.3.5/dist/highcharts-vue.min.js"></script>
+		<script>
+			Vue.use(HighchartsVue.default)
+		</script>
+  <script>
+    vueApp = new Vue({
+      el: '#app',
+      vuetify: new Vuetify(),
+      data() {
+        return {
+          countries: [],
+          states: [],
+          admin2s: [],
+          selectedCountry: "",
+          selectedState: "",
+          selectedAdmin2: "",
+          countriesLoading: false,
+          statesLoading: false,
+          admin2sLoading: false,
+          countriesDisabled: false,
+          statesDisabled: true,
+          admin2sDisabled:true,
+
+          tableHeaders: [
+            { text: 'Country/region', value: '0'  },
+            { text: 'Confirmed', value: '1' },
+            { text: 'Deaths', value: '2' },
+            { text: 'Recovered', value: '3' },
+          ],
+          tableData:[],
+          tableLoading:false,
+
+          historyTableHeaders: [
+            { text: "Date", value:"0"},
+            { text: 'Confirmed', value: '1' },
+            { text: 'Deaths', value: '2' },
+            { text: 'Recovered', value: '3' },
+          ],
+          historyTableData: [],
+          historyTableLoading:false,
+
+          chartOptions: {
+            chart: {
+              zoomType:"x"
+            },
+            title: {
+              text: "Unset"
+            },
+            series:[
+              {
+                name:"Confirmed",
+                data:[]
+              },
+              {
+                name:"Deaths",
+                data:[]
+              },
+              {
+                name:"New confirmed",
+                data:{}
+              },
+              {
+                name:"New deaths",
+                data:{}
+              }
+            ],
+            xAxis: {
+              type: 'datetime',
+              /* labels: {
+                formatter: function () {
+                  return Highcharts.dateFormat('%e %b', this.value * 1000); // milliseconds not seconds
+                },
+              } */
+            }
+          },
+          chartsList:[],
+          metrics:["Total Infected", "Total Deaths", "Infected", "Deaths"],
+          chart2Options:{
+            chart:{
+              zoomType:"x"
+            },
+            xAxis:{type: "datetime"},
+            series:[]
+          }
+        }
+
+      },
+      created: function() {
+        this.addItem();
+        this.loadCountries();
+        this.loadCountriesDataTable();
+        this.loadWorldHistoryDataTable();
+        //loadStates();
+        //loadAdmin2();
+      },
+      watch: {
+        selectedCountry: function(val) {
+          this.loadStates();
+          this.loadStatesDataTable();
+          this.loadCountryHistoryDataTable();
+        },
+        selectedState: function(val) {
+          this.loadAdmin2();
+          this.loadAdmin2sDataTable();
+          this.loadStateHistoryDataTable();
+        },
+        selectedAdmin2: function(val) {
+          this.loadAdmin2HistoryDataTable();
+        }
+      },
+      methods: {
+        loadCountries: function() {
+          this.countriesLoading=true;
+          fetch('api/list/country')
+            .then((response) => {
+              this.countriesLoading=false;
+              return response.json();
+            })
+            .then((data) => {
+              this.countries = data;
+            });
+        },
+        loadStates: function(chartItem) {
+          if (chartItem)  chartItem.statesLoading=true; else this.statesLoading=true;
+          country = "";
+          if (chartItem)  country=chartItem.country; else country = this.selectedCountry;          
+          fetch('api/list/' + country + "/state")
+            .then((response) => {
+              if (chartItem)  chartItem.statesLoading=false; else this.statesLoading=false;
+              return response.json();
+            })
+            .then((data) => {
+              if (chartItem)  chartItem.stateList=data; else this.states=data;
+              if (chartItem)  chartItem.statesDisabled = false; else this.statesDisabled = false;
+            });
+        },
+        loadAdmin2: function(chartItem) {
+          if (chartItem) chartItem.admin2sLoading = true; else this.admin2sLoading=true;
+          country = "";
+          state = "";
+          if (chartItem)  country=chartItem.country; else country = this.selectedCountry;          
+          if (chartItem)  state=chartItem.state; else state = this.selectedState;   
+          fetch('api/list/' + country + '/' + state + "/admin2")
+            .then((response) => {
+              if (chartItem) chartItem.admin2sLoading = false; else this.admin2sLoading=false;
+              return response.json();
+            })
+            .then((data) => {
+              if (chartItem) chartItem.admin2List = data; else this.admin2s=data;
+              this.admin2sDisabled = false;
+            });
+        },
+        loadCountriesDataTable: function() {
+          this.tableLoading=true;
+          fetch('/api/table/data/country')
+            .then((response) => {
+              this.tableLoading=false;
+              return response.json();
+            })
+            .then((data) => {
+              this.tableData = data;
+            });
+        },
+        loadStatesDataTable: function() {
+          this.tableLoading=true;
+          fetch('/api/table/data/' + this.selectedCountry)
+            .then((response) => {
+              this.tableLoading=false;
+              return response.json();
+            })
+            .then((data) => {
+              this.tableData = data;
+            });
+        },
+        loadAdmin2sDataTable: function() {
+          this.tableLoading=true;
+          fetch('/api/table/data/' + this.selectedCountry + "/" + this.selectedState)
+            .then((response) => {
+              this.tableLoading=false;
+              return response.json();
+            })
+            .then((data) => {
+              this.tableData = data;
+            });
+        },
+        loadWorldHistoryDataTable: function() {
+          this.historyTableLoading=true;
+          fetch('/api/table/history/world')
+            .then((response) => {
+              this.historyTableLoading=false;
+              return response.json();
+            })
+            .then((data) => {
+              this.chartOptions.title.text = "History"
+              this.historyTableData = data;
+              this.populateChart(data)
+            });
+        },
+        loadCountryHistoryDataTable: function() {
+          this.historyTableLoading=true;
+          fetch('/api/table/history/' + this.selectedCountry)
+            .then((response) => {
+              this.historyTableLoading=false;
+              return response.json();
+            })
+            .then((data) => {
+              this.chartOptions.title.text = this.selectedCountry + " History"
+              this.historyTableData = data;
+              this.populateChart(data)
+            });
+        },
+        loadStateHistoryDataTable: function() {
+          this.historyTableLoading=true;
+          fetch('/api/table/history/' + this.selectedCountry + "/" + this.selectedState)
+            .then((response) => {
+              this.historyTableLoading=false;
+              return response.json();
+            })
+            .then((data) => {
+              this.chartOptions.title.text = this.selectedCountry + " - " + this.selectedState + " History"
+              this.historyTableData = data;
+              this.populateChart(data)
+            });
+        },
+        loadAdmin2HistoryDataTable: function() {
+          this.historyTableLoading=true;
+          fetch('/api/table/history/' + this.selectedCountry + "/" + this.selectedState + "/" + this.selectedAdmin2)
+            .then((response) => {
+              this.historyTableLoading=false;
+              return response.json();
+            })
+            .then((data) => {
+              this.chartOptions.title.text = this.selectedCountry + " - " + this.selectedState + " - " + this.selectedAdmin2 + " History"
+              this.historyTableData = data;
+              this.populateChart(data)
+            });
+        },
+        populateChart: function(data) {
+          data0 = [];
+              data1 = [];
+              data2 = [];
+              data3 = [];
+              prevConfirmed = 0;
+              prevDeath = 0;
+              data.forEach(item => {
+                data0.push([new Date(item[0]).getTime(), item[1]]);
+                data1.push([new Date(item[0]).getTime(), item[2]]);
+                data2.push([new Date(item[0]).getTime(), item[1] - prevConfirmed]);
+                data3.push([new Date(item[0]).getTime(), item[2] - prevDeath]);
+                prevConfirmed = item[1];
+                prevDeath = item[2];
+              })
+              this.chartOptions.series[0].data = data0;
+              this.chartOptions.series[1].data = data1;
+              this.chartOptions.series[2].data = data2;
+              this.chartOptions.series[3].data = data3;
+        },
+        addItem: function() {
+          this.chartsList.push({
+            statesLoading:false,
+            stateList:[]
+          });
+        },
+        refreshItemList: function() {
+
+        },
+        generateChart: function() {
+          this.chart2Options.series = []
+          this.chartsList.forEach(item => {
+            jsonURL = "";
+            seriesName = "";
+            if (item.metric && item.metric != "") {
+              if (item.country) { 
+                console.log("Country: " + item.country);
+                if (item.state && item.state.length > 0) {
+                  console.log("State: " + item.state);
+                  if (item.admin2 && item.admin2.length > 0) {
+                    console.log("Admin 2: " + item.admin2);
+                    jsonURL = '/api/table/history/' + item.country + "/" + item.state + "/" + item.admin2;
+                    seriesName = item.country + "/" + item.state + "/" + item.admin2;
+                  } else {
+                    console.log("No admin 2");
+                    jsonURL = '/api/table/history/' + item.country + "/" + item.state
+                    seriesName = item.country + "/" + item.state;
+                  }
+                } else {
+                  console.log("No state");
+                  jsonURL = '/api/table/history/' + item.country
+                  seriesName = item.country;
+                }
+              } else {
+                console.log("No country");
+              }
+            } else {
+              console.log("No Metric");
+            }
+            console.log(jsonURL);
+            if (jsonURL != "") {
+              fetch(jsonURL)
+                .then((response) => {
+                  
+                  return response.json();
+                })
+                .then((data) => {
+                  seriesItem = {
+                    name: seriesName + " - " + item.metric,
+                    data: []
+                  }
+                  prevConfirmed = 0;
+                  prevDeath = 0;
+                  data.forEach(row => {
+                    switch (item.metric) {
+                      case "Total Infected" :seriesItem.data.push([new Date(row[0]).getTime(), row[1]]); break;
+                      case "Total Deaths" :  seriesItem.data.push([new Date(row[0]).getTime(), row[2]]); break;
+                      case "Infected":       seriesItem.data.push([new Date(row[0]).getTime(), row[1] - prevConfirmed]); break;
+                      case "Deaths":         seriesItem.data.push([new Date(row[0]).getTime(), row[2] - prevDeath]); break;
+                    }
+                    
+                    prevConfirmed = row[1];
+                    prevDeath = row[2];
+                  })
+                  this.chart2Options.series.push(seriesItem);
+                });
+            }
+          });
+        }
+      }
+    })
+  </script>
+</body>
+</html>
+{% endraw %}
