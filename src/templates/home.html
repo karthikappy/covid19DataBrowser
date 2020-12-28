@@ -441,7 +441,11 @@
             if (jsonURL != "") {
               fetch(jsonURL)
                 .then((response) => {
-                  
+                  //debugger;
+                  thisurl = response.url;
+                  urlparts = thisurl.
+                  urlparts = thisurl.split("/");
+                  seriesName = urlparts[urlparts.length -  1];
                   return response.json();
                 })
                 .then((data) => {
