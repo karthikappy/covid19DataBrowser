@@ -88,12 +88,12 @@
                     :loading="countriesLoading" 
                     label="Country" 
                     :disabled="countriesDisabled" 
-                    item-value="0"
+                    item-value="label" item-text="label"
                     v-on:change="loadStates(chartItem)"
                   >
                     <template v-slot:item="{ item }">
-                      <div style="width:50px"><span :class="'flag-icon flag-icon-' + item[1].toLowerCase() +' flag-icon-squared'"></span>{{item[1]}}</div>
-                      <div>{{item[0]}}</div>
+                      <div style="width:50px"><span :class="'flag-icon flag-icon-' + item.isocode.toLowerCase() +' flag-icon-squared'"></span>{{item.isocode}}</div>
+                      <div>{{item.label}}</div>
                     </template>
                   </v-autocomplete>
                 </v-col>
