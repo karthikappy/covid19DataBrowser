@@ -79,7 +79,7 @@
                 <a v-on:click="addItem">Add</a>
                 <a v-on:click="generateChart">Generate Chart</a>
               </v-row>
-              <v-row v-for="(chartItem, idx) in chartsList">
+              <v-row v-for="(chartItem, idx) in chartsList" v-bind:key="idx">
                 <v-col sm="1">{{idx+1}}</v-col>
                 <v-col cols="12" sm="2">
                   <v-autocomplete 
