@@ -8,7 +8,7 @@ app = Flask(__name__)
 def main1Page(): return render_template('home.html')
 
 @app.route("/old")
-def oldMain1Page(): return render_template('home_old.html')
+def oldMain1Page(): return render_template('home_new.html')
 
 @app.route("/api/list/country")
 def listCountries():

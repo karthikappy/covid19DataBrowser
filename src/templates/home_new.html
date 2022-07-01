@@ -1,0 +1,148 @@
+{% raw %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@4.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="static/icons/flag-icon-css/css/flag-icon.css">
+</head>
+
+<body>
+    <script type="text/x-template" id="area-selector-template">
+        <v-card>
+            <v-row>
+                <v-col>
+                    <v-autocomplete 
+                        v-model="selectedCountry" 
+                        :items="countries"
+                        :loading="countryLoading" 
+                        label="Country" 
+                        :search-input.sync="countrySearch"
+                    >
+                        <!-- <template v-slot:item="{ item }">
+                            <div style="width:50px">
+                                <span :class="'flag-icon flag-icon-' + item[1].toLowerCase() +' flag-icon-squared'"></span>
+                                {{item[1]}}
+                            </div>
+                            <div>{{item[0]}}</div>
+                        </template> -->
+                    </v-autocomplete>
+                </v-col>
+            </v-row>
+            <v-row>
+                <v-col>
+                    <v-autocomplete 
+                        v-model="selectedState" 
+                        :items="states" 
+                        :loading="statesLoading"
+                        label="State" 
+                        :disabled="statesDisabled"
+                    >
+                    </v-autocomplete>
+                </v-col>
+            </v-row>
+            <v-row>
+                <v-col>
+                    <v-autocomplete 
+                        v-model="selectedAdmin2" 
+                        :items="admin2s"
+                        :loading="admin2sLoading" 
+                        label="Admin2" 
+                        :disabled="admin2sDisabled"
+                    >
+                    </v-autocomplete>
+                </v-col>
+            </v-row>
+            <v-row>
+                <v-col>
+                    <!-- parameter dropdown -->
+                </v-col>
+            </v-row>
+            <v-row>
+                <v-col>
+                    <!-- Add/search button -->
+                </v-col>
+            </v-row>
+        </v-card>
+        
+    </script>
+    <div id="app">
+        <v-app>
+            <v-navigation-drawer app clipped floating v-model="drawer">
+                <v-tabs-items v-model="tab">
+                    <v-tab-item>
+                        <v-form>
+                            <v-container>
+                                <v-row>
+                                        <area-select :countries="countries"></area-select> 
+                                </v-row>
+                                <v-row>
+                                    <v-col cols="12" sm="12">
+                                      <v-data-table
+                                        :headers="tableHeaders"
+                                        :items="tableData"
+                                        :items-per-page="5"
+                                        class="elevation-1"
+                                        :loading="tableLoading"
+                                        dense
+                                      ></v-data-table>
+                                    </v-col>
+                                </v-row>
+                                <v-row>
+                                    <v-col cols="12" sm="12">
+                                      <v-data-table
+                                        :headers="historyTableHeaders"
+                                        :items="historyTableData"
+                                        :items-per-page="5"
+                                        class="elevation-1"
+                                        :loading="historyTableLoading"
+                                        dense
+                                      >
+                                        
+                                      </v-data-table>
+                                    </v-col>
+                                  </v-row>
+                            </v-container>
+                        </v-form>
+                    </v-tab-item>
+                    <v-tab-item>
+                        Tab 2
+                    </v-tab-item>
+                </v-tabs-items>
+            </v-navigation-drawer>
+            <v-app-bar color="deep-purple accent-4" dense dark fixed>
+                <v-app-bar-nav-icon v-on:click="drawer=!drawer"></v-app-bar-nav-icon>
+                <v-toolbar-title>Covid-19 Data Browser</v-toolbar-title>
+
+                <template v-slot:extension>
+                    <v-tabs align-with-title v-model="tab">
+                        <v-tab>Location Browser</v-tab>
+                        <v-tab>Compare Data</v-tab>
+                    </v-tabs>
+                </template>
+            </v-app-bar>
+            <v-content>
+                <v-container fluid>
+                    <template>
+                        <highcharts :options="chartOptions" style="height:800px"></highcharts>
+                    </template>
+                </v-container>
+            </v-content>
+        </v-app>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <!--   <script src="https://cdn.jsdelivr.net/npm/highcharts-vue@1.3.5/dist/highcharts-vue.min.js"></script> -->
+    <script type="text/javascript"
+        src="https://cdn.jsdelivr.net/npm/vue-highcharts/dist/vue-highcharts.min.js"></script>
+    <script src="static/scripts/index.js"></script>
+</body>
+
+</html>
+{% endraw %}
