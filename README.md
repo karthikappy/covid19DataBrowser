@@ -1,3 +1,6 @@
+# NOTE
+This project is not being actively maintained. The data used in this project is no longer being collected. 
+
 # covid19 Data Browser
 This is a simple project to retrieve and display openly available data about the Covid-19 pandemic
 
